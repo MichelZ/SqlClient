@@ -2170,7 +2170,7 @@ namespace Microsoft.Data.SqlClient
 
                             while (env != null)
                             {
-                                if (!this.Connection.IgnoreEnvChange)
+                                if (!Connection.IgnoreEnvChange)
                                 {
                                     switch (env._type)
                                     {
@@ -2642,7 +2642,7 @@ namespace Microsoft.Data.SqlClient
 
             while (tokenLength > processedLength)
             {
-                SqlEnvChange env = new SqlEnvChange();
+                var env = new SqlEnvChange();
                 result = stateObj.TryReadByte(out env._type);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -3456,7 +3456,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            List<Label> labels = new List<Label>(numLabels);
+            var labels = new List<Label>(numLabels);
             for (ushort i = 0; i < numLabels; i++)
             {
                 result = TryReadSensitivityLabel(stateObj, out string label, out string id);
@@ -3473,7 +3473,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            List<InformationType> informationTypes = new List<InformationType>(numInformationTypes);
+            var informationTypes = new List<InformationType>(numInformationTypes);
             for (ushort i = 0; i < numInformationTypes; i++)
             {
                 result = TryReadSensitivityInformationType(stateObj, out string informationType, out string id);
@@ -4529,8 +4529,8 @@ namespace Microsoft.Data.SqlClient
                 // or we have a culture id other than the cases below, we throw an error and
                 // throw away the rest of the results.
 
-                //  Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
-                //  This should be treated as an error and functionality switches into the following logic.
+                // Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
+                // This should be treated as an error and functionality switches into the following logic.
                 if (!success || codePage == 0)
                 {
                     switch (cultureId)
@@ -5003,7 +5003,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null)
-                {    
+                {
                     result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -6885,7 +6885,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("unknown tds type for sqlvariant!");
                     break;
             } // switch
-              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
         }
 
@@ -7052,7 +7052,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("unknown tds type for sqlvariant!");
                     break;
             } // switch
-              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
         }
 
@@ -8775,7 +8775,7 @@ namespace Microsoft.Data.SqlClient
             // set, so we need to handle them by using a different MARS session,
             // otherwise we'll write on the physical state objects while someone
             // else is using it.  When we don't have MARS enabled, we need to
-            // lock the physical state object to synchronize it's use at least
+            // lock the physical state object to synchronize its use at least
             // until we increment the open results count.  Once it's been
             // incremented the delegated transaction requests will fail, so they
             // won't stomp on anything.
@@ -11829,7 +11829,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
-                case TdsEnums.SQLJSON: 
+                case TdsEnums.SQLJSON:
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");
@@ -12105,7 +12105,9 @@ namespace Microsoft.Data.SqlClient
                     if (type.FixedLength == 4)
                     {
                         if (0 > dt.days || dt.days > UInt16.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(MetaType.ToDateTime(dt.days, dt.time, 4).ToString(CultureInfo.InvariantCulture));
+                        }
 
                         if (stateObj._bIntBytes == null)
                         {
@@ -12259,7 +12261,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTEXT:
                     if (value is SqlChars)
                     {
-                        String sch = new String(((SqlChars)value).Value);
+                        string sch = new string(((SqlChars)value).Value);
                         return SerializeEncodingChar(sch, actualLength, offset, _defaultEncoding);
                     }
                     else
