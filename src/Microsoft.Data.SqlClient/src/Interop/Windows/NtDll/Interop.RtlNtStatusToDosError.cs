@@ -14,7 +14,7 @@ internal partial class Interop
         /// </summary>
         public const int ERROR_MR_MID_NOT_FOUND = 317;
 
-        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms680600(v=vs.85).aspx
+        // https://learn.microsoft.com/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror
         [DllImport(Libraries.NtDll, ExactSpelling = true)]
         public unsafe static extern uint RtlNtStatusToDosError(
             int Status);

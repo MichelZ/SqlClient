@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
     {
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*' />
-        [Obsolete("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)] // MDAC 86034
+        [Obsolete("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  https://learn.microsoft.com/dotnet/framework/whats-new/whats-obsolete", true)] // MDAC 86034
         public SqlClientPermission() : this(PermissionState.None)
         {
         }
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionStateAndallowBlankPasswordBool"]/*' />
-        [Obsolete("SqlClientPermission(PermissionState state, Boolean allowBlankPassword) has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)] // MDAC 86034
+        [Obsolete("SqlClientPermission(PermissionState state, Boolean allowBlankPassword) has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  https://learn.microsoft.com/dotnet/framework/whats-new/whats-obsolete", true)] // MDAC 86034
         public SqlClientPermission(PermissionState state, bool allowBlankPassword) : this(state)
         {
             AllowBlankPassword = allowBlankPassword;

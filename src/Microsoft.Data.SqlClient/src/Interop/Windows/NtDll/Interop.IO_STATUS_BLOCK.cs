@@ -9,7 +9,7 @@ internal partial class Interop
 {
     internal partial class NtDll
     {
-        // https://msdn.microsoft.com/en-us/library/windows/hardware/ff550671.aspx
+        // https://learn.microsoft.com/windows-hardware/drivers/ddi/wdm/ns-wdm-_io_status_block
         [StructLayout(LayoutKind.Sequential)]
         public struct IO_STATUS_BLOCK
         {

@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private const int SqlServerBrowserPort = 1434; //port SQL Server Browser
         private const int ReceiveMAXTimeoutsForCLNT_BCAST_EX = 15000; //Default max time for response wait
         private const int ReceiveTimeoutsForCLNT_BCAST_EX = 1000; //subsequent wait time for response after intial wait 
-        private const int ServerResponseHeaderSizeForCLNT_BCAST_EX = 3;//(SVR_RESP + RESP_SIZE) https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1
+        private const int ServerResponseHeaderSizeForCLNT_BCAST_EX = 3;//(SVR_RESP + RESP_SIZE) https://learn.microsoft.com/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1
         private const int ValidResponseSizeForCLNT_BCAST_EX = 4096; //valid reponse size should be less than 4096
         private const int FirstTimeoutForCLNT_BCAST_EX = 5000;//wait for first response for 5 seconds
         private const int CLNT_BCAST_EX = 2;//request packet
@@ -384,8 +384,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
         /// <summary>
         /// Sends request to server, and receives response from server (SQLBrowser) on port 1434 by UDP
-        /// Request (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/a3035afa-c268-4699-b8fd-4f351e5c8e9e)
-        /// Response (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1) 
+        /// Request (https://learn.microsoft.com/openspecs/windows_protocols/mc-sqlr/a3035afa-c268-4699-b8fd-4f351e5c8e9e)
+        /// Response (https://learn.microsoft.com/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1) 
         /// </summary>
         /// <returns>string containing list of SVR_RESP(just RESP_DATA)</returns>
         internal static string SendBroadcastUDPRequest()
@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient.SNI
             StringBuilder response = new StringBuilder();
             byte[] CLNT_BCAST_EX_Request = new byte[1] { CLNT_BCAST_EX }; //0x02
             // Waits 5 seconds for the first response and every 1 second up to 15 seconds
-            // https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3
+            // https://learn.microsoft.com/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3
             int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX;
 
             using (TrySNIEventScope.Create(nameof(SSRP)))

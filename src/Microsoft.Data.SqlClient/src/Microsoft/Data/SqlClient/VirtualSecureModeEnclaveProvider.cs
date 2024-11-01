@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         #region Members
 
         // HttpClient is intended to be instantiated once per application, rather than per-use.
-        // see https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-6.0#remarks
+        // see https://learn.microsoft.com/dotnet/api/system.net.http.httpclient#remarks
         private static readonly HttpClient s_client = new HttpClient();
 
         // this is endpoint given to us by HGS team from windows
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // A managed model representing the output of EnclaveGetAttestationReport
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844233(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/winenclaveapi/nf-winenclaveapi-enclavegetattestationreport
     internal class EnclaveReportPackage
     {
         private int Size { get; set; }
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT_PKG_HEADER
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844257(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/ntenclv/ns-ntenclv-vbs_enclave_report_pkg_heade
     internal class EnclaveReportPackageHeader
     {
         public uint PackageSize { get; set; }
@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844255(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/ntenclv/ns-ntenclv-vbs_enclave_report
     internal class EnclaveReport
     {
         private const int EnclaveDataLength = 64;
@@ -307,7 +307,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // A managed model of struct ENCLAVE_IDENTITY
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/ntenclv/ns-ntenclv-enclave_identity
     internal class EnclaveIdentity
     {
         private const int ImageEnclaveLongIdLength = 32;
@@ -376,7 +376,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT_VARDATA_HEADER
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt827065(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/ntenclv/ns-ntenclv-vbs_enclave_report_vardata_header
     internal class EnclaveReportModuleHeader
     {
         public uint DataType { get; set; }
@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT_MODULE
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844256(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/ntenclv/ns-ntenclv-vbs_enclave_report_module
     internal class EnclaveReportModule
     {
         private const int ImageEnclaveLongIdLength = 32;
@@ -446,7 +446,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     // An enum representing the Flags property of ENCLAVE_IDENTITY
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
+    // https://learn.microsoft.com/windows/win32/api/ntenclv/ns-ntenclv-enclave_identity
     internal enum EnclaveIdentityFlags
     {
         ENCLAVE_FLAG_NONE = 0x00000000,
