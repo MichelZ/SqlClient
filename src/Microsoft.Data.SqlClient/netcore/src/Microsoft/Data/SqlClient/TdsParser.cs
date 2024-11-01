@@ -1945,7 +1945,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 if (TdsParserState.Broken == State || TdsParserState.Closed == State)
+                {
                     break; // jump out of the loop if the state is already broken or closed.
+                }
 
                 if (!stateObj._accumulateInfoEvents && (stateObj._pendingInfoEvents != null))
                 {
@@ -1965,10 +1967,12 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                         else
+                        {
                             foreach (SqlError error in stateObj._pendingInfoEvents)
                             {
                                 stateObj.AddWarning(error);
                             }
+                        }
                     }
                     stateObj._pendingInfoEvents = null;
                 }
