@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // A managed model representing the output of EnclaveGetAttestationReport
-        // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844233(v=vs.85).aspx
+        // https://learn.microsoft.com/windows/win32/api/winenclaveapi/nf-winenclaveapi-enclavegetattestationreport
         internal class AzureAttestationToken
         {
             public string AttestationToken { get; set; }

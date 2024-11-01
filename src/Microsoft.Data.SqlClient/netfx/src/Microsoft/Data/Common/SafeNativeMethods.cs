@@ -63,7 +63,7 @@ namespace Microsoft.Data.Common
             return actualPtr;
         }
 
-        // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/sysinfo/base/getcomputernameex.asp
+        // https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getcomputernameexw
         [DllImport(ExternDll.Kernel32, CharSet = CharSet.Unicode, EntryPoint = "GetComputerNameExW", SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern int GetComputerNameEx(int nameType, StringBuilder nameBuffer, ref int bufferSize);

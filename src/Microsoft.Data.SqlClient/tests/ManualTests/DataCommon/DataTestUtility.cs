@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsJsonSupported = false;
 
         // Azure Synapse EngineEditionId == 6
-        // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
+        // More could be read at https://learn.microsoft.com/sql/t-sql/functions/serverproperty-transact-sql#propertyname
         public static bool IsAzureSynapse
         {
             get

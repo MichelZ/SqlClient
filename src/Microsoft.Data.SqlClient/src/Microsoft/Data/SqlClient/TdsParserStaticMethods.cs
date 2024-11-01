@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Obfuscate password to be sent to SQL Server
-        // Blurb from the TDS spec at https://msdn.microsoft.com/en-us/library/dd304523.aspx
+        // Blurb from the TDS spec at https://learn.microsoft.com/openspecs/windows_protocols/ms-tds/b46a581a-39de-4745-b076-ec4dbb7d13ec
         // "Before submitting a password from the client to the server, for every byte in the password buffer 
         // starting with the position pointed to by IbPassword, the client SHOULD first swap the four high bits 
         // with the four low bits and then do a bit-XOR with 0xA5 (10100101). After reading a submitted password, 

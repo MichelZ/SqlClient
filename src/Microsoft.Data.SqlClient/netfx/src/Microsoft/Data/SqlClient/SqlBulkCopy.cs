@@ -1619,7 +1619,7 @@ namespace Microsoft.Data.SqlClient
                                 else
                                 {
                                     // We truncate to at most 100 characters to match SQL Servers behavior as described in
-                                    // https://blogs.msdn.microsoft.com/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152/
+                                    // https://learn.microsoft.com/archive/blogs/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152
                                     str = str.Remove(Math.Min(maxStringLength, 100));
                                 }
                                 throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.column, str);

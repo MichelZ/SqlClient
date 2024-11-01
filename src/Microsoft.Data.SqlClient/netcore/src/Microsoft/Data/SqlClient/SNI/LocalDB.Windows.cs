@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private IntPtr _startInstanceHandle = IntPtr.Zero;
 
-        // Local Db api doc https://msdn.microsoft.com/en-us/library/hh217143.aspx
+        // Local Db api doc https://learn.microsoft.com/sql/relational-databases/express-localdb-instance-apis/localdbstartinstance-function
         // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate int LocalDBStartInstance(

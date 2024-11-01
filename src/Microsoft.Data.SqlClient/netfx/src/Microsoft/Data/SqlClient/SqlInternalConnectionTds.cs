@@ -581,7 +581,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // The errors in the transient error set are contained in
-        // https://azure.microsoft.com/en-us/documentation/articles/sql-database-develop-error-messages/#transient-faults-connection-loss-and-other-temporary-errors
+        // https://learn.microsoft.com/azure/azure-sql/database/troubleshoot-common-errors-issues#transient-faults-connection-loss-and-other-temporary-errors
         private static void populateTransientErrors()
         {
             // SQL Error Code: 4060

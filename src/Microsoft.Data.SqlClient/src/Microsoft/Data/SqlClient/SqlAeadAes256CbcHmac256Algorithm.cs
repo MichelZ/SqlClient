@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// This class implements authenticated encryption algorithm with associated data as described in 
-    /// http://tools.ietf.org/html/draft-mcgrew-aead-aes-cbc-hmac-sha2-05. More specifically this implements
+    /// https://datatracker.ietf.org/doc/html/draft-mcgrew-aead-aes-cbc-hmac-sha2-05. More specifically this implements
     /// AEAD_AES_256_CBC_HMAC_SHA256 algorithm.
     /// </summary>
     internal class SqlAeadAes256CbcHmac256Algorithm : SqlClientEncryptionAlgorithm

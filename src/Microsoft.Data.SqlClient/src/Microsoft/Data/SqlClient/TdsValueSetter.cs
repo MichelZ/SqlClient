@@ -698,7 +698,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NET6_0_OR_GREATER
             // In TDS protocol: 
-            // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/786f5b8a-f87d-4980-9070-b9b7274c681d
+            // https://learn.microsoft.com/openspecs/windows_protocols/ms-tds/786f5b8a-f87d-4980-9070-b9b7274c681d
             //
             //   date is represented as one 3 - byte unsigned integer that represents the number of days since January 1, year 1.
             //
@@ -714,7 +714,7 @@ namespace Microsoft.Data.SqlClient
 
             Span<byte> result = stackalloc byte[8];
 
-            // https://learn.microsoft.com/en-us/dotnet/api/system.buffers.binary.binaryprimitives.writeint64bigendian?view=net-8.0
+            // https://learn.microsoft.com/dotnet/api/system.buffers.binary.binaryprimitives.writeint64bigendian?view=net-8.0
             // WriteInt64LittleEndian requires 8 bytes to write the value.
             BinaryPrimitives.WriteInt64LittleEndian(result, time);
             // The DateTimeOffset length is variable depending on the scale, 1 to 7, used.

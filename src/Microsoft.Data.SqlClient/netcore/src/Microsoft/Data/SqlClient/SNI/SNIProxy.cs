@@ -716,7 +716,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
                     // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
-                    // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
+                    // https://learn.microsoft.com/sql/tools/configuration-manager/named-pipes-properties
                     if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && ResolvedProtocol == Protocol.NP)
                     {
                         string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);

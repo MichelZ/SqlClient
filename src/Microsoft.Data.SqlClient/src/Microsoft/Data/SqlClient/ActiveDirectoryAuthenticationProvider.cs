@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient
              * 
              * MSAL will throw a meaningful exception if you specify both the Azure AD authority audience and the tenant ID.
              * If you don't specify an audience, your app will target Azure AD and personal Microsoft accounts as an audience. (That is, it will behave as though `common` were specified.)
-             * More information: https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
+             * More information: https://learn.microsoft.com/entra/identity-platform/msal-client-application-configuration
             **/
 
             int separatorIndex = parameters.Authority.LastIndexOf('/');
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
              * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
              * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
              *
-             * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
+             * https://learn.microsoft.com/entra/identity-platform/scenario-desktop-app-registration#redirect-uris
              */
             string redirectUri = s_nativeClientRedirectUri;
 
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient
             if (account != null)
             {
                 // If 'account' is available in 'app', we use the same to acquire token silently.
-                // Read More on API docs: https://docs.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent
+                // Read More on API docs: https://learn.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent
                 result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(cancellationToken: cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
             }

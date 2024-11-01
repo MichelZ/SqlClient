@@ -10,8 +10,8 @@ internal partial class Interop
 {
     internal partial class NtDll
     {
-        // https://msdn.microsoft.com/en-us/library/bb432380.aspx
-        // https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424.aspx
+        // https://learn.microsoft.com/windows/win32/api/winternl/nf-winternl-ntcreatefile
+        // https://learn.microsoft.com/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntcreatefile
         [DllImport(Libraries.NtDll, CharSet = CharSet.Unicode, ExactSpelling = true)]
         private unsafe static extern int NtCreateFile(
             out IntPtr FileHandle,
@@ -112,7 +112,7 @@ internal partial class Interop
         }
 
         /// <summary>
-        /// <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff557749.aspx">OBJECT_ATTRIBUTES</a> structure.
+        /// <a href="https://learn.microsoft.com/windows/win32/api/ntdef/ns-ntdef-_object_attributes">OBJECT_ATTRIBUTES</a> structure.
         /// The OBJECT_ATTRIBUTES structure specifies attributes that can be applied to objects or object handles by routines 
         /// that create objects and/or return handles to objects.
         /// </summary>
@@ -166,8 +166,8 @@ internal partial class Interop
         [Flags]
         public enum ObjectAttributes : uint
         {
-            // https://msdn.microsoft.com/en-us/library/windows/hardware/ff564586.aspx
-            // https://msdn.microsoft.com/en-us/library/windows/hardware/ff547804.aspx
+            // https://learn.microsoft.com/windows-hardware/drivers/debuggercmds/-obja
+            // https://learn.microsoft.com/windows/win32/api/ntdef/nf-ntdef-initializeobjectattributes
 
             /// <summary>
             /// This handle can be inherited by child processes of the current process.
@@ -441,7 +441,7 @@ internal partial class Interop
             /// </summary>
             /// <remarks>
             /// More details can be found in Remote Storage documentation (see Basic Concepts).
-            /// https://technet.microsoft.com/en-us/library/cc938459.aspx
+            /// https://learn.microsoft.com/previous-versions/windows/it-pro/windows-2000-server/cc938459(v=technet.10)
             /// </remarks>
             FILE_OPEN_NO_RECALL = 0x00400000
 
@@ -454,13 +454,13 @@ internal partial class Interop
         /// </summary>
         /// <remarks>
         /// File Security and Access Rights
-        /// https://msdn.microsoft.com/en-us/library/windows/desktop/aa364399.aspx
+        /// https://learn.microsoft.com/windows/win32/fileio/file-security-and-access-rights
         /// </remarks>
         [Flags]
         public enum DesiredAccess : uint
         {
             // File Access Rights Constants
-            // https://msdn.microsoft.com/en-us/library/windows/desktop/gg258116.aspx
+            // https://learn.microsoft.com/windows/win32/fileio/file-access-rights-constants
 
             /// <summary>
             /// For a file, the right to read data from the file.

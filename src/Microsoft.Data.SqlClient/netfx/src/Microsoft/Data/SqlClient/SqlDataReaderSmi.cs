@@ -999,7 +999,7 @@ namespace Microsoft.Data.SqlClient
 
         public override XmlReader GetXmlReader(int ordinal)
         {
-            // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
+            // NOTE: sql_variant can not contain a XML data type: https://learn.microsoft.com/sql/t-sql/data-types/sql-variant-transact-sql
 
             EnsureCanGetCol(ordinal);
             if (_currentMetaData[ordinal].SqlDbType != SqlDbType.Xml)

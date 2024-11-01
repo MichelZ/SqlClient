@@ -45,7 +45,7 @@ namespace Microsoft.Data.Common
     /// </summary>
     internal static partial class ADP
     {
-        // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
+        // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (https://learn.microsoft.com/dotnet/framework/performance/sql-server-programming-and-host-protection-attributes)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
         private static Task<bool> s_trueTask;
         internal static Task<bool> TrueTask => s_trueTask ??= Task.FromResult(true);

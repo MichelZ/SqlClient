@@ -4,7 +4,7 @@
 
 internal partial class Interop
 {
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382.aspx
+    // https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-
     internal partial class Errors
     {
         internal const int ERROR_FILE_NOT_FOUND = 0x2;
