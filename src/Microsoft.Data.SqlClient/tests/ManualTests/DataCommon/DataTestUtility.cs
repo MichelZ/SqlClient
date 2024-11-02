@@ -411,6 +411,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsLocalhostServer()
+        {
+            return AreConnStringsSetup() && Utils.IsLocalhostServer(new SqlConnectionStringBuilder(NPConnectionString).DataSource) && Utils.IsLocalhostServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
+        }
+        
         public static bool IsSQL2022() => string.Equals("16", SQLServerVersion.Trim());
 
         public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());

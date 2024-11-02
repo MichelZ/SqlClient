@@ -42,5 +42,14 @@ namespace Microsoft.Data.SqlClient.TestUtilities
             }
             return false;
         }
+
+        public static bool IsLocalhostServer(string dataSource)
+        {
+            dataSource = dataSource.ToLowerInvariant();
+            return dataSource.Contains("localhost") ||
+                   dataSource.StartsWith(".") ||
+                   dataSource.Contains(Environment.MachineName.ToLowerInvariant()) ||
+                   dataSource.Contains("127.0.0.1");
+        }
     }
 }

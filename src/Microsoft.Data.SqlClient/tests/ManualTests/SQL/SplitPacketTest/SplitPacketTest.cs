@@ -11,7 +11,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    [ActiveIssue("5538")] // Only testable on localhost
     public class SplitPacketTest
     {
         private int Port = -1;
@@ -39,42 +38,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             BaseConnString = builder.ConnectionString;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsLocalhostServer))]
         public void OneByteSplitTest()
         {
             SplitPacketSize = 1;
             OpenConnection();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsLocalhostServer))]
         public void AlmostFullHeaderTest()
         {
             SplitPacketSize = 7;
             OpenConnection();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsLocalhostServer))]
         public void FullHeaderTest()
         {
             SplitPacketSize = 8;
             OpenConnection();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsLocalhostServer))]
         public void HeaderPlusOneTest()
         {
             SplitPacketSize = 9;
             OpenConnection();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsLocalhostServer))]
         public void MARSSplitTest()
         {
             SplitPacketSize = 1;
             OpenMarsConnection("select * from Orders");
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsLocalhostServer))]
         public void MARSReplicateTest()
         {
             SplitPacketSize = 1;
