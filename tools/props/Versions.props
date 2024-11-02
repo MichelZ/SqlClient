@@ -50,8 +50,8 @@
   <PropertyGroup>
     <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
-    <MicrosoftDotNetXUnitExtensionsVersion>8.0.0-beta.24123.1</MicrosoftDotNetXUnitExtensionsVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>9.0.0-beta.24157.1</MicrosoftDotNetRemoteExecutorVersion>
+    <MicrosoftDotNetXUnitExtensionsVersion>9.0.0-beta.23613.3</MicrosoftDotNetXUnitExtensionsVersion>
     <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>
@@ -66,8 +66,8 @@
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-    <XunitVersion>2.4.2</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
+    <XunitVersion>2.9.2</XunitVersion>
+    <XunitrunnervisualstudioVersion>2.8.2</XunitrunnervisualstudioVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
