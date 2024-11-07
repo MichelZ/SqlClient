@@ -227,13 +227,10 @@ namespace Microsoft.Data.SqlClient
         // textptr sequence
         private static readonly byte[] s_longDataHeader = { 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-        // Various other statics
-        private const int ATTENTION_TIMEOUT = 5000;  // internal attention timeout, in ticks
-
-        // XML metadata substitue sequence
+        // XML metadata substitute sequence
         private static readonly byte[] s_xmlMetadataSubstituteSequence = { 0xe7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-        // JSON metadata substitue sequence
+        // JSON metadata substitute sequence
         private static readonly byte[] s_jsonMetadataSubstituteSequence = { 0xa7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
@@ -1574,6 +1571,12 @@ namespace Microsoft.Data.SqlClient
                     _pMarsPhysicalConObj = null;
                 }
             }
+
+            _resetConnectionEvent?.Dispose();
+            _resetConnectionEvent = null;
+
+            _defaultEncoding = null;
+            _defaultCollation = null;
         }
 
         // Fires a single InfoMessageEvent
@@ -1801,7 +1804,7 @@ namespace Microsoft.Data.SqlClient
              * !=null       | == 0     | replace text left of errorMessage
             */
 
-            Debug.Assert(!ADP.IsEmpty(errorMessage), "Empty error message received from SNI");
+            Debug.Assert(!string.IsNullOrEmpty(errorMessage), "Empty error message received from SNI");
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
 
@@ -1823,7 +1826,7 @@ namespace Microsoft.Data.SqlClient
                 if (0 <= iColon)
                 {
                     int len = errorMessage.Length;
-                    len -= 2;    // exclude "\r\n" sequence
+                    len -= Environment.NewLine.Length; // exclude newline sequence
                     iColon += 2;  // skip over ": " sequence
                     len -= iColon;
                     /*
@@ -2367,7 +2370,6 @@ namespace Microsoft.Data.SqlClient
                                 stateObj.AddWarning(error);
                             }
                         }
-
                     }
                     stateObj._pendingInfoEvents = null;
                 }
@@ -2705,8 +2707,7 @@ namespace Microsoft.Data.SqlClient
                             if (tokenLength != TdsEnums.VARNULL)
                             {
                                 _SqlMetaDataSet metadata;
-                                result = TryProcessMetaData(tokenLength, stateObj, out metadata,
-                                                        cmdHandler != null ? cmdHandler.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+                                result = TryProcessMetaData(tokenLength, stateObj, out metadata, cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     return result;
@@ -2840,8 +2841,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLRETURNVALUE:
                         {
                             SqlReturnValue returnValue;
-                            result = TryProcessReturnValue(tokenLength, stateObj, out returnValue,
-                                                       cmdHandler != null ? cmdHandler.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+                            result = TryProcessReturnValue(tokenLength, stateObj, out returnValue, cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -3038,7 +3038,6 @@ namespace Microsoft.Data.SqlClient
             int processedLength = 0;
             SqlEnvChange head = null;
             SqlEnvChange tail = null;
-
             sqlEnvChange = null;
 
             while (tokenLength > processedLength)
@@ -3167,7 +3166,6 @@ namespace Microsoft.Data.SqlClient
                             // Give the parser the new collation values in case parameters don't specify one
                             _defaultCollation = env._newCollation;
                             _defaultLCID = env._newCollation.LCID;
-
 
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
@@ -4572,11 +4570,7 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-
-        internal TdsOperationStatus TryProcessReturnValue(int length,
-                                            TdsParserStateObject stateObj,
-                                            out SqlReturnValue returnValue,
-                                            SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+        internal TdsOperationStatus TryProcessReturnValue(int length, TdsParserStateObject stateObj, out SqlReturnValue returnValue, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             TdsOperationStatus result;
             returnValue = null;
@@ -5158,7 +5152,7 @@ namespace Microsoft.Data.SqlClient
                         SqlDataReader.SharedState sharedState = stateObj._readerState;
                         if (sharedState != null && sharedState._dataReady)
                         {
-                            var metadata = stateObj._cleanupMetaData;
+                            _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
                             if (stateObj._partialHeaderBytesRead > 0)
                             {
                                 TdsOperationStatus result = stateObj.TryProcessHeader();
@@ -5185,7 +5179,7 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         if (stateObj._longlen != 0)
                                         {
-                                            TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
+                                            TdsOperationStatus result = TrySkipPlpValue(ulong.MaxValue, stateObj, out _);
                                             if (result != TdsOperationStatus.Done)
                                             {
                                                 throw SQL.SynchronousCallMayNotPend();
@@ -5201,7 +5195,6 @@ namespace Microsoft.Data.SqlClient
                                             throw SQL.SynchronousCallMayNotPend();
                                         }
                                     }
-
                                 }
 
 
@@ -5555,9 +5548,10 @@ namespace Microsoft.Data.SqlClient
 
             // Read the cipher info table first
             SqlTceCipherInfoTable cipherTable = null;
+            TdsOperationStatus result;
             if (IsColumnEncryptionSupported)
             {
-                TdsOperationStatus result = TryProcessCipherInfoTable(stateObj, out cipherTable);
+                result = TryProcessCipherInfoTable(stateObj, out cipherTable);
                 if (result != TdsOperationStatus.Done)
                 {
                     metaData = null;
@@ -5569,7 +5563,7 @@ namespace Microsoft.Data.SqlClient
             _SqlMetaDataSet newMetaData = new _SqlMetaDataSet(cColumns, cipherTable);
             for (int i = 0; i < cColumns; i++)
             {
-                TdsOperationStatus result = TryCommonProcessMetaData(stateObj, newMetaData[i], cipherTable, fColMD: true, columnEncryptionSetting: columnEncryptionSetting);
+                result = TryCommonProcessMetaData(stateObj, newMetaData[i], cipherTable, fColMD: true, columnEncryptionSetting: columnEncryptionSetting);
                 if (result != TdsOperationStatus.Done)
                 {
                     metaData = null;
@@ -5582,10 +5576,7 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        private bool IsVarTimeTds(byte tdsType)
-        {
-            return tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
-        }
+        private bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
 
         private TdsOperationStatus TryProcessTypeInfo(TdsParserStateObject stateObj, SqlMetaDataPriv col, UInt32 userType)
         {
@@ -5989,8 +5980,7 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        private void WriteUDTMetaData(object value, string database, string schema, string type,
-                                        TdsParserStateObject stateObj)
+        private void WriteUDTMetaData(object value, string database, string schema, string type, TdsParserStateObject stateObj)
         {
             // database
             if (string.IsNullOrEmpty(database))
@@ -6193,6 +6183,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
+
                 result = stateObj.TryReadByte(out col.tableNum);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -6393,9 +6384,7 @@ namespace Microsoft.Data.SqlClient
                     // We only read up to 2Gb. Throw if data is larger. Very large data
                     // should be read in chunks in sequential read mode
                     // For Plp columns, we may have gotten only the length of the first chunk
-                    result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (Int32.MaxValue) : (int)len, stateObj,
-                                         SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
-                                         md.column);
+                    result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (Int32.MaxValue) : (int)len, stateObj, SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/, md.column);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -6416,10 +6405,8 @@ namespace Microsoft.Data.SqlClient
         /// Determines if a column value should be transparently decrypted (based on SqlCommand and Connection String settings).
         /// </summary>
         /// <returns>true if the value should be transparently decrypted, false otherwise</returns>
-        internal static bool ShouldHonorTceForRead(SqlCommandColumnEncryptionSetting columnEncryptionSetting,
-            SqlInternalConnectionTds connection)
+        internal static bool ShouldHonorTceForRead(SqlCommandColumnEncryptionSetting columnEncryptionSetting, SqlInternalConnectionTds connection)
         {
-
             // Command leve setting trumps all
             switch (columnEncryptionSetting)
             {
@@ -6433,16 +6420,11 @@ namespace Microsoft.Data.SqlClient
                     // Check connection level setting!
                     Debug.Assert(SqlCommandColumnEncryptionSetting.UseConnectionSetting == columnEncryptionSetting,
                         "Unexpected value for command level override");
-                    return (connection != null && connection.ConnectionOptions != null &&
-                        connection.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled);
+                    return (connection != null && connection.ConnectionOptions != null && connection.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled);
             }
         }
 
-        internal static object GetNullSqlValue(
-                SqlBuffer nullVal,
-                SqlMetaDataPriv md,
-                SqlCommandColumnEncryptionSetting columnEncryptionSetting,
-                SqlInternalConnectionTds connection)
+        internal static object GetNullSqlValue(SqlBuffer nullVal, SqlMetaDataPriv md, SqlCommandColumnEncryptionSetting columnEncryptionSetting, SqlInternalConnectionTds connection)
         {
             SqlDbType type = md.type;
 
@@ -10978,9 +10960,9 @@ namespace Microsoft.Data.SqlClient
                                                     metaData.SqlDbType, metaData.IsMultiValued, value, null, SmiContextFactory.Sql2008Version);
             }
 
-            var sendDefaultValue = sendDefault ? 1 : 0;
             if (advancedTraceIsOn)
             {
+                int sendDefaultValue = sendDefault ? 1 : 0;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
             }
 
@@ -11538,8 +11520,8 @@ namespace Microsoft.Data.SqlClient
                     // Write the flags
                     ushort flags;
                     flags = (ushort)(md.Updatability << 2);
-                    flags |= (ushort)(md.IsNullable ? (ushort)TdsEnums.Nullable : (ushort)0);
-                    flags |= (ushort)(md.IsIdentity ? (ushort)TdsEnums.Identity : (ushort)0);
+                    flags |= md.IsNullable ? TdsEnums.Nullable : (ushort)0;
+                    flags |= md.IsIdentity ? TdsEnums.Identity : (ushort)0;
 
                     // Write the next byte of flags
                     if (IsColumnEncryptionSupported)

@@ -2044,7 +2044,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 if (TdsParserState.Broken == State || TdsParserState.Closed == State)
+                {
                     break; // jump out of the loop if the state is already broken or closed.
+                }
 
                 if (!stateObj._accumulateInfoEvents && (stateObj._pendingInfoEvents != null))
                 {
@@ -2064,10 +2066,12 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                         else
+                        {
                             foreach (SqlError error in stateObj._pendingInfoEvents)
                             {
                                 stateObj.AddWarning(error);
                             }
+                        }
                     }
                     stateObj._pendingInfoEvents = null;
                 }
@@ -2266,7 +2270,7 @@ namespace Microsoft.Data.SqlClient
 
                             while (env != null)
                             {
-                                if (!this.Connection.IgnoreEnvChange)
+                                if (!Connection.IgnoreEnvChange)
                                 {
                                     switch (env._type)
                                     {
@@ -2738,14 +2742,12 @@ namespace Microsoft.Data.SqlClient
             int processedLength = 0;
             SqlEnvChange head = null;
             SqlEnvChange tail = null;
-            TdsOperationStatus result;
-
             sqlEnvChange = null;
 
             while (tokenLength > processedLength)
             {
                 SqlEnvChange env = new SqlEnvChange();
-                result = stateObj.TryReadByte(out env._type);
+                TdsOperationStatus result = stateObj.TryReadByte(out env._type);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -2865,6 +2867,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Give the parser the new collation values in case parameters don't specify one
                             _defaultCollation = env._newCollation;
+                            _defaultLCID = env._newCollation.LCID;
 
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
@@ -2880,7 +2883,6 @@ namespace Microsoft.Data.SqlClient
                                     _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                                 }
                             }
-                            _defaultLCID = env._newCollation.LCID;
                         }
 
                         result = stateObj.TryReadByte(out byteLength);
@@ -4703,7 +4705,8 @@ namespace Microsoft.Data.SqlClient
                     _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
                     if (stateObj._partialHeaderBytesRead > 0)
                     {
-                        if (stateObj.TryProcessHeader() != TdsOperationStatus.Done)
+                        TdsOperationStatus result = stateObj.TryProcessHeader();
+                        if (result != TdsOperationStatus.Done)                        
                         {
                             throw SQL.SynchronousCallMayNotPend();
                         }
@@ -4711,7 +4714,8 @@ namespace Microsoft.Data.SqlClient
                     if (0 == sharedState._nextColumnHeaderToRead)
                     {
                         // i. user called read but didn't fetch anything
-                        if (stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj) != TdsOperationStatus.Done)
+                        TdsOperationStatus result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
+                        if (result != TdsOperationStatus.Done)
                         {
                             throw SQL.SynchronousCallMayNotPend();
                         }
@@ -4725,7 +4729,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 if (stateObj._longlen != 0)
                                 {
-                                    if (TrySkipPlpValue(ulong.MaxValue, stateObj, out _) != TdsOperationStatus.Done)
+                                    TdsOperationStatus result = TrySkipPlpValue(ulong.MaxValue, stateObj, out _);
+                                    if (result != TdsOperationStatus.Done)
                                     {
                                         throw SQL.SynchronousCallMayNotPend();
                                     }
@@ -4734,7 +4739,8 @@ namespace Microsoft.Data.SqlClient
 
                             else if (0 < sharedState._columnDataBytesRemaining)
                             {
-                                if (stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining) != TdsOperationStatus.Done)
+                                        TdsOperationStatus result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                        if (result != TdsOperationStatus.Done)
                                 {
                                     throw SQL.SynchronousCallMayNotPend();
                                 }
@@ -5324,6 +5330,85 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
+        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
+        {
+            ushort shortLength;
+            byte byteLength;
+
+            // max byte size
+            TdsOperationStatus result = stateObj.TryReadUInt16(out shortLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            metaData.length = shortLength;
+
+            // database name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (metaData.udt is null)
+            {
+                metaData.udt = new SqlMetaDataUdt();
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            // schema name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.SchemaName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            // type name
+            result = stateObj.TryReadByte(out byteLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (byteLength != 0)
+            {
+                result = stateObj.TryReadString(byteLength, out metaData.udt.TypeName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            result = stateObj.TryReadUInt16(out shortLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            if (shortLength != 0)
+            {
+                result = stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
+            return TdsOperationStatus.Done;
+        }        
+        
         private void WriteUDTMetaData(object value, string database, string schema, string type, TdsParserStateObject stateObj)
         {
             // database
@@ -5494,12 +5579,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(columns != null && columns.Length > 0, "no metadata available!");
 
             metaData = null;
+            TdsOperationStatus result;
 
             for (int i = 0; i < columns.Length; i++)
             {
                 _SqlMetaData col = columns[i];
                 
-                TdsOperationStatus result = stateObj.TryReadByte(out _);
+                result = stateObj.TryReadByte(out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -6531,9 +6617,8 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
             Span<byte> datetimeBuffer = ((uint)length <= 16) ? stackalloc byte[16] : new byte[length];
-            TdsOperationStatus result;
-
-            result = stateObj.TryReadByteArray(datetimeBuffer, length);
+             
+            TdsOperationStatus result = stateObj.TryReadByteArray(datetimeBuffer, length);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -13129,9 +13214,9 @@ namespace Microsoft.Data.SqlClient
         {
             // Read and skip cb bytes or until  ReadPlpLength returns 0.
             int bytesSkipped;
-            TdsOperationStatus result;
             totalBytesSkipped = 0;
-
+            TdsOperationStatus result;
+            
             if (stateObj._longlenleft == 0)
             {
                 result = stateObj.TryReadPlpLength(false, out _);
@@ -13206,86 +13291,7 @@ namespace Microsoft.Data.SqlClient
             return stateObj._longlen;
         }
 
-        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
-        {
-
-            ushort shortLength;
-            byte byteLength;
-            // max byte size
-
-            TdsOperationStatus result = stateObj.TryReadUInt16(out shortLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            metaData.length = shortLength;
-
-            // database name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (metaData.udt is null)
-            {
-                metaData.udt = new SqlMetaDataUdt();
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.DatabaseName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            // schema name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.SchemaName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            // type name
-            result = stateObj.TryReadByte(out byteLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (byteLength != 0)
-            {
-                result = stateObj.TryReadString(byteLength, out metaData.udt.TypeName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            result = stateObj.TryReadUInt16(out shortLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                return result;
-            }
-            if (shortLength != 0)
-            {
-                result = stateObj.TryReadString(shortLength, out metaData.udt.AssemblyQualifiedName);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-
-            return TdsOperationStatus.Done;
-        }
-
+       
         const string StateTraceFormatString = "\n\t"
                                        + "         _physicalStateObj = {0}\n\t"
                                        + "         _pMarsPhysicalConObj = {1}\n\t"
