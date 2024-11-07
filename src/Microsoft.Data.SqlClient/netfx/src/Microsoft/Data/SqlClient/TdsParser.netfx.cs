@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System;
 using System.Net;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -267,39 +268,6 @@ namespace Microsoft.Data.SqlClient
             {
                 _connHandler.DoomThisConnection();
                 throw;
-            }
-        }
-
-        internal void PostReadAsyncForMars()
-        {
-            // HACK HACK HACK - for Async only
-            // Have to post read to intialize MARS - will get callback on this when connection goes
-            // down or is closed.
-
-            IntPtr temp = IntPtr.Zero;
-            uint error = TdsEnums.SNI_SUCCESS;
-
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            { }
-            finally
-            {
-                _pMarsPhysicalConObj.IncrementPendingCallbacks();
-
-                error = SNINativeMethodWrapper.SNIReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
-
-                if (temp != IntPtr.Zero)
-                {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    SNINativeMethodWrapper.SNIPacketRelease(temp);
-                }
-            }
-            Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
-            if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
-            {
-                Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
-                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                ThrowExceptionAndWarning(_physicalStateObj);
             }
         }
     }
