@@ -9488,7 +9488,8 @@ namespace Microsoft.Data.SqlClient
                                 if (
                                     !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
-                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
+                                )
                                 {
                                     throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
                                 }
