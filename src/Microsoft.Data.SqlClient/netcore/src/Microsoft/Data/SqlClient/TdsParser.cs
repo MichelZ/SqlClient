@@ -75,9 +75,9 @@ namespace Microsoft.Data.SqlClient
 
         internal Encoding _defaultEncoding = null;                  // for sql character data
 
-        private static EncryptionOptions s_sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
+        private static EncryptionOptions _sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
 
-        private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
+        private EncryptionOptions _encryptionOption = _sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
         private SqlInternalTransaction _pendingTransaction;    // pending transaction for 2005 and beyond.
@@ -617,7 +617,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             // create a new packet encryption changes the internal packet size Bug# 228403
-            _physicalStateObj.ClearAllWritePackets();
+            try
+            { }   // EmptyTry/Finally to avoid FXCop violation
+            finally
+            {
+                _physicalStateObj.ClearAllWritePackets();
+            }
         }
 
         internal void EnableMars()
@@ -846,6 +851,7 @@ namespace Microsoft.Data.SqlClient
                         int actIdSize = GUID_SIZE + sizeof(uint);
                         offset += actIdSize;
                         optionDataSize += actIdSize;
+                        
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler?._clientConnectionId, actId);
                         break;
 
@@ -925,7 +931,7 @@ namespace Microsoft.Data.SqlClient
             out bool marsCapable,
             out bool fedAuthRequired,
             bool tlsFirst,
-            string serverCert)
+            string serverCertificateFilename)
         {
             // Assign default values
             marsCapable = _fMARS; 
@@ -1155,7 +1161,7 @@ namespace Microsoft.Data.SqlClient
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                     | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCert);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
             }
 
             return PreLoginHandshakeStatus.Successful;
@@ -1471,6 +1477,7 @@ namespace Microsoft.Data.SqlClient
                             // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
                             throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
+
                             // continue building SqlError instance
                     }
                 }
@@ -1565,7 +1572,7 @@ namespace Microsoft.Data.SqlClient
                 errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                     sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
 
-                SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
+                SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Error Message ={3}, Server = {4}",
                     (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, _server);
 
                 return new SqlError(infoNumber: (int)details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
@@ -3401,7 +3408,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // Check if the attestation protocol is specified and supports the enclave type.
-                        if (SqlConnectionAttestationProtocol.NotSpecified != attestationProtocol && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
+                        if (attestationProtocol != SqlConnectionAttestationProtocol.NotSpecified && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
                         {
                             throw SQL.AttestationProtocolNotSupportEnclaveType(attestationProtocol.ToString(), EnclaveType);
                         }

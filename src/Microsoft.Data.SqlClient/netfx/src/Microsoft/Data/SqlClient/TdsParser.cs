@@ -12,20 +12,16 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Net;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
-using Microsoft.SqlServer.Server;
-using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -33,21 +29,13 @@ namespace Microsoft.Data.SqlClient
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
-        private static int _objectTypeCount; // EventSource Counter
+        private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         private SSPIContextProvider _authenticationProvider;
 
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-
-
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        internal int ObjectID => _objectID;
 
         /// <summary>
         /// Verify client encryption possibility.
@@ -157,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         
         // now data length is 1 byte
         // First bit is 1 indicating client support failover partner with readonly intent
-        private static readonly byte[] s_FeatureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
+        private static readonly byte[] s_featureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
         
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
@@ -240,8 +228,8 @@ namespace Microsoft.Data.SqlClient
                 // change it; this can occur when there is a delegated transaction
                 // and the user attempts to do an API begin transaction; in these
                 // cases, it's safe to ignore the set.
-                if ((_currentTransaction == null && value != null) ||
-                    (_currentTransaction != null && value == null))
+                if ((_currentTransaction == null && value != null)
+                     || (_currentTransaction != null && value == null))
                 {
                     _currentTransaction = value;
                 }
@@ -400,7 +388,7 @@ namespace Microsoft.Data.SqlClient
             // Clean up IsSQLDNSCachingSupported flag from previous status
             _connHandler.IsSQLDNSCachingSupported = false;
 
-            UInt32 sniStatus = SNILoadHandle.SingletonInstance.Status;
+            uint sniStatus = SNILoadHandle.SingletonInstance.Status;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
@@ -591,12 +579,7 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-
-            SendPreLoginHandshake(
-                instanceName,
-                encrypt,
-                integratedSecurity,
-                serverCertificateFilename);
+            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -650,12 +633,7 @@ namespace Microsoft.Data.SqlClient
                 // for DNS Caching phase 1
                 AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
 
-                SendPreLoginHandshake(
-                    instanceName,
-                    encrypt,
-                    integratedSecurity,
-                    serverCertificateFilename);
-
+                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
                     authType,
                     encrypt,
@@ -718,11 +696,10 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
-                uint error = 0;
                 uint info = 0;
 
                 // Add SMUX (MARS) SNI provider.
-                error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
+                uint error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -730,34 +707,7 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                // HACK HACK HACK - for Async only
-                // Have to post read to intialize MARS - will get callback on this when connection goes
-                // down or is closed.
-
-                IntPtr temp = IntPtr.Zero;
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
-                {
-                    _pMarsPhysicalConObj.IncrementPendingCallbacks();
-
-                    error = SNINativeMethodWrapper.SNIReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
-
-                    if (temp != IntPtr.Zero)
-                    {
-                        // Be sure to release packet, otherwise it will be leaked by native.
-                        SNINativeMethodWrapper.SNIPacketRelease(temp);
-                    }
-                }
-                Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
-                if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
-                {
-                    Debug.Assert(TdsEnums.SNI_SUCCESS != error, "Unexpected successful read async on physical connection before enabling MARS!");
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
+                PostReadAsyncForMars();
 
                 _physicalStateObj = CreateSession(); // Create and open default MARS stateObj and connection.
             }
@@ -822,14 +772,14 @@ namespace Microsoft.Data.SqlClient
             byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
             bool integratedSecurity,
-            string serverCertificate)
+            string serverCertificateFilename)
         {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
                 uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCertificate);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
@@ -968,7 +918,7 @@ namespace Microsoft.Data.SqlClient
                         offset += actIdSize;
                         optionDataSize += actIdSize;
 
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler._clientConnectionId, actId);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler?._clientConnectionId, actId);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
@@ -997,7 +947,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate)
+        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
         {
             uint error = 0;
 
@@ -1017,7 +967,7 @@ namespace Microsoft.Data.SqlClient
             authInfo.certHash = false;
             authInfo.clientCertificateCallbackContext = IntPtr.Zero;
             authInfo.clientCertificateCallback = null;
-            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificate) ? null : serverCertificate;
+            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
@@ -1313,7 +1263,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.Deactivate|ADV> {0} deactivating", ObjectID);
             if (SqlClientEventSource.Log.IsStateDumpEnabled())
             {
-                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0}, {1}", ObjectID, TraceString());
+                SqlClientEventSource.Log.StateDumpEvent("<sc.TdsParser.Deactivate|STATE> {0} {1}", ObjectID, TraceString());
             }
 
             if (MARSOn)
@@ -1591,6 +1541,8 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
+            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
+
 #endif
             SNINativeMethodWrapper.SNI_Error sniError = new SNINativeMethodWrapper.SNI_Error();
             SNINativeMethodWrapper.SNIGetLastError(out sniError);
@@ -1603,14 +1555,17 @@ namespace Microsoft.Data.SqlClient
                 {
                     case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs:
                         // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.");
                         throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
 
                     case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified:
                         // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.");
                         throw SQL.MultiSubnetFailoverWithInstanceSpecified();
 
                     case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol:
                         // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
                         throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
 
                         // continue building SqlError instance
@@ -1641,7 +1596,7 @@ namespace Microsoft.Data.SqlClient
             string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
             uint win32ErrorCode = sniError.nativeError;
-
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Native Error Code = {0}", win32ErrorCode);
             if (sniError.sniError == 0)
             {
                 // Provider error. The message from provider is preceeded with non-localizable info from SNI
@@ -1649,8 +1604,9 @@ namespace Microsoft.Data.SqlClient
                 //
                 int iColon = errorMessage.IndexOf(':');
                 Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
                 Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
-
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
                 // extract the message excluding the colon and trailing cr/lf chars
                 if (0 <= iColon)
                 {
@@ -1685,6 +1641,8 @@ namespace Microsoft.Data.SqlClient
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                 sqlContextInfo, providerName, (int)sniError.sniError, errorMessage);
+            SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
+                    (int)sniError.nativeError, (int)sniError.lineNumber, sniError.function, sniError.errorMessage, _server);
 
             return new SqlError((int)sniError.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
                                 _server, errorMessage, sniError.function, (int)sniError.lineNumber, win32ErrorCode);
@@ -1855,11 +1813,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (stateObj._bIntBytes == null)
             {
-                stateObj._bIntBytes = new byte[4];
+                stateObj._bIntBytes = new byte[sizeof(int)];
             }
             else
             {
-                Debug.Assert(4 == stateObj._bIntBytes.Length);
+                Debug.Assert(sizeof(int) == stateObj._bIntBytes.Length);
             }
 
             int current = 0;
@@ -2026,7 +1984,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal byte[] SerializeDouble(double v)
         {
-            if (Double.IsInfinity(v) || Double.IsNaN(v))
+            if (double.IsInfinity(v) || double.IsNaN(v))
             {
                 throw ADP.ParameterValueOutOfRange(v.ToString());
             }
@@ -2798,7 +2756,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
                 // Spin until SendAttention has cleared _attentionSending, this prevents a race condition between receiving the attention ACK and setting _attentionSent
-                SpinWait.SpinUntil(() => !stateObj._attentionSending);
+                TryRunSetupSpinWaitContinuation(stateObj);
 
                 Debug.Assert(stateObj._attentionSent, "Attention ACK has been received without attention sent");
                 if (stateObj._attentionSent)
@@ -2821,6 +2779,9 @@ namespace Microsoft.Data.SqlClient
             }
             return TdsOperationStatus.Done;
         }
+
+        // This is in its own method to avoid always allocating the lambda in TryRun
+        private static void TryRunSetupSpinWaitContinuation(TdsParserStateObject stateObj) => SpinWait.SpinUntil(() => !stateObj._attentionSending);
 
         private TdsOperationStatus TryProcessEnvChange(int tokenLength, TdsParserStateObject stateObj, out SqlEnvChange sqlEnvChange)
         {
@@ -4126,7 +4087,7 @@ namespace Microsoft.Data.SqlClient
             tokenLen -= sizeof(uint); // remaining length is shortened since we read optCount
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
+                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> CountOfInfoIDs = {0}", optionsCount.ToString(CultureInfo.InvariantCulture));
             }
             if (tokenLen > 0)
             {
@@ -6827,13 +6788,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        internal TdsOperationStatus TryReadSqlValue(SqlBuffer value,
-                                      SqlMetaDataPriv md,
-                                      int length,
-                                      TdsParserStateObject stateObj,
-                                      SqlCommandColumnEncryptionSetting columnEncryptionOverride,
-                                      string columnName,
-                                      SqlCommand command = null)
+        internal TdsOperationStatus TryReadSqlValue(SqlBuffer value, SqlMetaDataPriv md, int length, TdsParserStateObject stateObj, SqlCommandColumnEncryptionSetting columnEncryptionOverride, string columnName, SqlCommand command = null)
         {
             bool isPlp = md.metaType.IsPlp;
             byte tdsType = md.tdsType;
@@ -6890,8 +6845,8 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     if (md.isEncrypted
-                        && ((columnEncryptionOverride == SqlCommandColumnEncryptionSetting.Enabled
-                            || columnEncryptionOverride == SqlCommandColumnEncryptionSetting.ResultSetOnly)
+                        && (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.Enabled
+                            || columnEncryptionOverride == SqlCommandColumnEncryptionSetting.ResultSetOnly
                             || (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.UseConnectionSetting
                                 && _connHandler != null && _connHandler.ConnectionOptions != null
                                 && _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled)))
@@ -8901,9 +8856,9 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
 
                 // Feature Data length
-                WriteInt(s_FeatureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
+                WriteInt(s_featureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
 
-                _physicalStateObj.WriteByteArray(s_FeatureExtDataAzureSQLSupportFeatureRequest, s_FeatureExtDataAzureSQLSupportFeatureRequest.Length, 0);
+                _physicalStateObj.WriteByteArray(s_featureExtDataAzureSQLSupportFeatureRequest, s_featureExtDataAzureSQLSupportFeatureRequest.Length, 0);
             }
 
             return len;
@@ -11358,7 +11313,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByte(md.scale);
                             break;
                         case SqlDbTypeExtensions.Json:
-                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_xmlMetadataSubstituteSequence.Length, 0);
+                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         default:
                             stateObj.WriteByte(md.tdsType);
