@@ -41,27 +41,6 @@ namespace Microsoft.Data.SqlClient
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
-        internal struct ReliabilitySection
-        {
-            /// <summary>
-            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
-            /// </summary>
-            [Conditional("NETFRAMEWORK")]
-            internal static void Assert(string message)
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Start()
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Stop()
-            {
-            }
-        }
-
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
@@ -8134,40 +8113,38 @@ namespace Microsoft.Data.SqlClient
                     tokenLength = -1;
                     return TdsOperationStatus.Done;
                 case TdsEnums.SQLSESSIONSTATE:
-                    return stateObj.TryReadInt32(out tokenLength);
                 case TdsEnums.SQLFEDAUTHINFO:
                     return stateObj.TryReadInt32(out tokenLength);
             }
 
+            if (token == TdsEnums.SQLUDT)
+            { // special case for UDTs
+                tokenLength = -1; // Should we return -1 or not call GetTokenLength for UDTs?
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLRETURNVALUE)
             {
-                if (token == TdsEnums.SQLUDT)
-                { // special case for UDTs
-                    tokenLength = -1; // Should we return -1 or not call GetTokenLength for UDTs?
-                    return TdsOperationStatus.Done;
-                }
-                else if (token == TdsEnums.SQLRETURNVALUE)
+                tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLXMLTYPE)
+            {
+                ushort value;
+                result = stateObj.TryReadUInt16(out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
-                    return TdsOperationStatus.Done;
+                    tokenLength = 0;
+                    return result;
                 }
-                else if (token == TdsEnums.SQLXMLTYPE)
-                {
-                    ushort value;
-                    result = stateObj.TryReadUInt16(out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        tokenLength = 0;
-                        return result;
-                    }
-                    tokenLength = (int)value;
-                    Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
-                    return TdsOperationStatus.Done;
-                }
-                else if (token == TdsEnums.SQLJSON)
-                {
-                    tokenLength = -1;
-                    return TdsOperationStatus.Done;
-                }
+
+                tokenLength = (int)value;
+                Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
+                return TdsOperationStatus.Done;
+            }
+            else if (token == TdsEnums.SQLJSON)
+            {
+                tokenLength = -1;
+                return TdsOperationStatus.Done;
             }
 
             switch (token & TdsEnums.SQLLenMask)
@@ -8189,6 +8166,7 @@ namespace Microsoft.Data.SqlClient
                             tokenLength = 0;
                             return result;
                         }
+
                         tokenLength = value;
                         return TdsOperationStatus.Done;
                     }
@@ -8206,6 +8184,7 @@ namespace Microsoft.Data.SqlClient
                             tokenLength = 0;
                             return result;
                         }
+
                         tokenLength = value;
                         return TdsOperationStatus.Done;
                     }
@@ -8804,7 +8783,7 @@ namespace Microsoft.Data.SqlClient
                 // write variable length portion
                 WriteString(rec.hostName, _physicalStateObj);
 
-                // if we are using SSPI, do not send over username/password, since we will use SSPI instead
+                // if we are using SSPI or fed auth MSAL, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
@@ -8880,51 +8859,54 @@ namespace Microsoft.Data.SqlClient
         {
             if (useFeatureExt)
             {
-                if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                checked
                 {
-                    length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request & wirte = {0}", write);
-                    Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                    length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
-                {
-                    length += WriteTceFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
-                {
-                    length += WriteGlobalTransactionsFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
-                {
-                    length += WriteAzureSQLSupportFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
-                {
-                    length += WriteDataClassificationFeatureRequest(write);
-                }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
-                {
-                    length += WriteUTF8SupportFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                    {
+                        length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request & wirte = {0}", write);
+                        Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
+                        length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
+                    {
+                        length += WriteTceFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
+                    {
+                        length += WriteGlobalTransactionsFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
+                    {
+                        length += WriteAzureSQLSupportFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                    {
+                        length += WriteDataClassificationFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
+                    {
+                        length += WriteUTF8SupportFeatureRequest(write);
+                    }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
-                {
-                    length += WriteSQLDNSCachingFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                    {
+                        length += WriteSQLDNSCachingFeatureRequest(write);
+                    }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
-                {
-                    length += WriteJsonSupportFeatureRequest(write);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                    {
+                        length += WriteJsonSupportFeatureRequest(write);
+                    }
 
-                length++; // for terminator
-                if (write)
-                {
-                    _physicalStateObj.WriteByte(0xFF); // terminator
+                    length++; // for terminator
+                    if (write)
+                    {
+                        _physicalStateObj.WriteByte(0xFF); // terminator
+                    }
                 }
             }
 
@@ -9263,8 +9245,8 @@ namespace Microsoft.Data.SqlClient
                     // Reset the ThreadHasParserLock value in case our caller expects it to be set\not set
                     _connHandler.ThreadHasParserLockForClose = originalThreadHasParserLock;
                 }
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
             }
+             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
         }
 
         internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
@@ -11430,15 +11412,13 @@ namespace Microsoft.Data.SqlClient
             // For Plp fields, this should only be used when writing to metadata header.
             // For actual data length, WriteDataLength should be used.
             // For Xml fields, there is no token length field. For MAX fields it is 0xffff.
+            if (TdsEnums.SQLUDT == token)
             {
-                if (TdsEnums.SQLUDT == token)
-                {
-                    tokenLength = 8;
-                }
-                else if (token == TdsEnums.SQLXMLTYPE)
-                {
-                    tokenLength = 8;
-                }
+                tokenLength = 8;
+            }
+            else if (token == TdsEnums.SQLXMLTYPE)
+            {
+                tokenLength = 8;
             }
 
             if (tokenLength == 0)
