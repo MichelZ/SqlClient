@@ -554,9 +554,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
       <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs</Link>
     </Compile>
@@ -827,7 +824,6 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
     
-    <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
