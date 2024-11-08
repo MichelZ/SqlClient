@@ -621,8 +621,6 @@
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
     <Compile Include="Common\System\Net\InternalException.cs" />
-    <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
-    <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
     <Compile Include="Common\System\Net\NegotiationInfoClass.cs" />
     <Compile Include="Common\System\Net\SecurityStatusPal.cs" />
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
@@ -885,9 +883,6 @@
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Common\System\Net\Security\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
