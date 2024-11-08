@@ -616,10 +616,6 @@
     </Compile>
 
     <Compile Include="Common\System\NotImplemented.cs" />
-    <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
-    <Compile Include="Common\System\Net\InternalException.cs" />
-    <Compile Include="Common\System\Net\NegotiationInfoClass.cs" />
-    <Compile Include="Common\System\Net\SecurityStatusPal.cs" />
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
@@ -790,8 +786,6 @@
     </Compile>
     
     <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
-    <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
-    <Compile Include="Common\System\Net\SecurityStatusAdapterPal.Windows.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
@@ -824,7 +818,6 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
     
-    <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
