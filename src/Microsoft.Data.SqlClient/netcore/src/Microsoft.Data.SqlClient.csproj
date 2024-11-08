@@ -815,3 +815,4 @@
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
 </Project>
+ 
