@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Diagnostics;
 
 #nullable enable
@@ -8,6 +9,10 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParser
     {
+        internal static void FillDoubleBytes(double value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt64LittleEndian(buffer, BitConverter.DoubleToInt64Bits(value));
+
+        internal static void FillFloatBytes(float value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt32LittleEndian(buffer, BitConverterCompatible.SingleToInt32Bits(value));
+
         internal void ProcessSSPI(int receivedLength)
         {
             Debug.Assert(_authenticationProvider is not null);
