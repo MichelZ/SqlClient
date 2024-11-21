@@ -366,11 +366,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        /// <summary>
-        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
-        /// </summary>
-        /// <returns>True, if target SQL Server supports Data Classification</returns>
-        public static bool IsSupportedDataClassification()
+/// <summary>
+/// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+/// </summary>
+/// <returns>True, if target SQL Server supports Data Classification</returns>
+public static bool IsSupportedDataClassification()
         {
             try
             {
@@ -482,14 +482,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsSupportingDistributedTransactions()
         {
 #if NET8_0_OR_GREATER
-            return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
+            return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer() && IsWindowsDatabase();
 #elif NETFRAMEWORK
-            return IsNotAzureServer();
+            return IsNotAzureServer() && IsWindowsDatabase();
 #else
             return false;
 #endif
         }
 
+        public static bool IsWindowsDatabase()
+        {
+            return GetDatabasePlatform() == "Windows";
+        }
+
+        private static string GetDatabasePlatform()
+        {
+            try
+            {
+                using (var connection = new SqlConnection(TCPConnectionString))
+                using (var command = new SqlCommand("SELECT @@VERSION", connection))
+                {
+                    connection.Open();
+                    var result = command.ExecuteScalar();
+                    if (result != null)
+                    {
+                        string version = result.ToString();
+                        if (version.Contains("Linux"))
+                        {
+                            return "Linux";
+                        }
+                        else if (version.Contains("Windows"))
+                        {
+                            return "Windows";
+                        }
+                        else if (version.Contains("Azure SQL Database"))
+                        {
+                            return "Azure SQL Database";
+                        }
+                        else
+                        {
+                            return "Unknown";
+                        }
+                    }
+                }
+            }
+            catch (SqlException e)
+            {
+                // Check for Error 208: Invalid Object Name
+                if (e.Errors != null && e.Errors[0].Number == 208)
+                {
+                    return "Unknown";
+                }
+            }
+
+            return "Unknown";
+        }
+        
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;

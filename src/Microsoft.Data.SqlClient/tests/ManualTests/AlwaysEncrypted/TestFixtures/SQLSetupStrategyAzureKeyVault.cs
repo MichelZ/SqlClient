@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -17,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SqlColumnEncryptionAzureKeyVaultProvider AkvStoreProvider;
         public DummyMasterKeyForAKVProvider DummyMasterKey;
 
-        public SQLSetupStrategyAzureKeyVault() : base()
+        public SQLSetupStrategyAzureKeyVault(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
         {
             AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
             if (!IsAKVProviderRegistered)

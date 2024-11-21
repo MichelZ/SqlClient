@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -14,13 +15,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public CspColumnMasterKey CspColumnMasterKey;
         public DummyMasterKeyForCertStoreProvider DummyMasterKey;
 
-        public SQLSetupStrategyCertStoreProvider() : base()
+        public SQLSetupStrategyCertStoreProvider(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
         {
             CertStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
             SetupDatabase();
         }
 
-        protected SQLSetupStrategyCertStoreProvider(string customKeyPath) => keyPath = customKeyPath;
+        protected SQLSetupStrategyCertStoreProvider(ITestOutputHelper testOutputHelper, string customKeyPath) : this(testOutputHelper) => keyPath = customKeyPath;
 
         internal override void SetupDatabase()
         {

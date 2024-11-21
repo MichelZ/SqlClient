@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     Console.WriteLine("CSP path is {0}", cspPath);
 
-                    sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
+                    sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(_testOutputHelper, cspPath);
                     string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
                     using SqlConnection sqlConn = new(connectionString);
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 CertificateUtilityWin.RSAPersistKeyInCsp(providerName, keyIdentifier);
                 string cspPath = String.Concat(providerName, @"/", keyIdentifier);
 
-                SQLSetupStrategyCspExt sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
+                SQLSetupStrategyCspExt sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(_testOutputHelper, cspPath);
                 string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
                 try

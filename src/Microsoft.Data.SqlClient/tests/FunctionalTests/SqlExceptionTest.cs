@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient.Tests
                 TypeNameHandling = TypeNameHandling.All,
             };
 
-            // TODO: Deserialization fails on Unix with "Member 'ClassName' was not found."
             var sqlEx = JsonConvert.DeserializeObject<SqlException>(json, settings);
 
             Assert.Equal(e.ClientConnectionId, sqlEx.ClientConnectionId);

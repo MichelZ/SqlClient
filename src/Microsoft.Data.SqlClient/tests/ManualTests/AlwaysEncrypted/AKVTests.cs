@@ -9,17 +9,20 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class AKVTest : IClassFixture<SQLSetupStrategyAzureKeyVault>
     {
         private readonly SQLSetupStrategyAzureKeyVault _fixture;
+        private readonly ITestOutputHelper _testOutputHelper;
         private readonly string _akvTableName;
 
-        public AKVTest(SQLSetupStrategyAzureKeyVault fixture)
+        public AKVTest(SQLSetupStrategyAzureKeyVault fixture, ITestOutputHelper testOutputHelper)
         {
             _fixture = fixture;
+            _testOutputHelper = testOutputHelper;
             _akvTableName = fixture.AKVTestTable.Name;
 
             // Disable the cache to avoid false failures.
@@ -133,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
-            using SQLSetupStrategyCertStoreProvider certStoreFixture = new();
+            using SQLSetupStrategyCertStoreProvider certStoreFixture = new(_testOutputHelper);
             byte[] plainTextColumnEncryptionKey = ColumnEncryptionKey.GenerateRandomBytes(ColumnEncryptionKey.KeySizeInBytes);
             byte[] encryptedColumnEncryptionKeyUsingAKV = _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
             byte[] columnEncryptionKeyReturnedAKV2Cert = certStoreFixture.CertStoreProvider.DecryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);

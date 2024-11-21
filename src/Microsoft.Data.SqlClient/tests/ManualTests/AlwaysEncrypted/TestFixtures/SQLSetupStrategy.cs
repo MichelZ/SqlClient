@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtures.Setup;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -17,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
         protected static X509Certificate2 certificate;
+
         public string keyPath { get; internal set; }
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
@@ -56,15 +58,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table TabSmallCharTarget { get; private set; }
 
         protected List<DbObject> databaseObjects = new List<DbObject>();
+        protected ITestOutputHelper testOutputHelper;
         public Dictionary<string, string> sqlBulkTruncationTableNames = new Dictionary<string, string>();
 
-        public SQLSetupStrategy()
+        static SQLSetupStrategy()
         {
-            if (certificate == null)
-            {
-                certificate = CertificateUtility.CreateCertificate();
-            }
+            certificate = CertificateUtility.CreateCertificate();
+        }
+
+        public SQLSetupStrategy(ITestOutputHelper testOutputHelper)
+        {
             keyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", certificate.Thumbprint);
+            this.testOutputHelper = testOutputHelper;
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
@@ -267,14 +272,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected virtual void Dispose(bool disposing)
         {
-            databaseObjects.Reverse();
-            foreach (string value in DataTestUtility.AEConnStringsSetup)
+            try
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                databaseObjects.Reverse();
+                foreach (string value in DataTestUtility.AEConnStringsSetup)
                 {
-                    sqlConnection.Open();
-                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                    using (SqlConnection sqlConnection = new SqlConnection(value))
+                    {
+                        sqlConnection.Open();
+                        databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                testOutputHelper.WriteLine($"Error while Disposing {nameof(SQLSetupStrategy)}: {e.Message}");
             }
         }
     }
@@ -287,15 +299,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private SQLSetupStrategy akvFixture = null;
         public SQLSetupStrategy Fixture => certStoreFixture ?? akvFixture;
 
-        public PlatformSpecificTestContext()
+        public PlatformSpecificTestContext(ITestOutputHelper testOutputHelper)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                certStoreFixture = new SQLSetupStrategyCertStoreProvider();
+                certStoreFixture = new SQLSetupStrategyCertStoreProvider(testOutputHelper);
             }
             else
             {
-                akvFixture = new SQLSetupStrategyAzureKeyVault();
+                akvFixture = new SQLSetupStrategyAzureKeyVault(testOutputHelper);
             }
         }
 

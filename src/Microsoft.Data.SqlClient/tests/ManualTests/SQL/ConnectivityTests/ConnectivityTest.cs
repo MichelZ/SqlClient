@@ -451,7 +451,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if ("localhost".Equals(hostname.ToLower()) && (port.Equals(-1) || port.Equals(1433)) &&
                 string.IsNullOrEmpty(instanceName) && b.UserID != null && b.UserID.ToLower().Equals("sa"))
             {
-                return true;
+                return DataTestUtility.IsWindowsDatabase();
             }
 
             return false;

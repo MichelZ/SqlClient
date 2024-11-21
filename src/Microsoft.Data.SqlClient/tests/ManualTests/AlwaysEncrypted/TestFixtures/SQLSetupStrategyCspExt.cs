@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -12,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table CspProviderTable { get; private set; }
         public SqlColumnEncryptionCspProvider keyStoreProvider { get; }
 
-        public SQLSetupStrategyCspExt(string cspKeyPath) : base(cspKeyPath)
+        public SQLSetupStrategyCspExt(ITestOutputHelper testOutputHelper, string cspKeyPath) : base(testOutputHelper, cspKeyPath)
         {
             keyStoreProvider = new SqlColumnEncryptionCspProvider();
             this.SetupDatabase();
