@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: 'Triage Needed'
+labels: ':new: Triage Needed, :bug: Bug!'
 assignees: ''
 
 ---
